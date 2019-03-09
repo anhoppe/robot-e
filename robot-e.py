@@ -1,11 +1,15 @@
 from tkinter import *
 from PIL import ImageTk, Image
+import random
 
 class App():
 	def __init__(self):
 		self.shotSpeed = 3
-		self.doveSpeed = 2
+		self.enemySpeed = 2
 		self.maxY = 600
+		self.maxX = 800
+
+		self.clockSpeed = 15
 		
 		self.root = Tk()
 		self.canvas = Canvas(self.root, width = 800, height = 600)		
@@ -22,6 +26,12 @@ class App():
 		self.arrowRight = False
 		self.player = self.canvas.create_image(self.xPos, self.yPos, image=img)	
 
+		# Setup player round
+		self.roundImage = ImageTk.PhotoImage(Image.open("feuerball.png"))
+		self.round = None
+		self.roundX = 0
+		self.roundY = 0
+
 		
 		# Setup enemy
 		doveImg =  ImageTk.PhotoImage(Image.open("buntemoewe.png"))
@@ -30,11 +40,12 @@ class App():
 		self.dove = self.canvas.create_image(self.doveX, self.doveY, image=doveImg)
 		self.moveDown = True
 
-		# Setup round
-		self.roundImage = ImageTk.PhotoImage(Image.open("feuerball.png"))
-		self.round = None
-		self.roundX = 0
-		self.roundY = 0
+		# Setup enemy round
+		self.enemyRoundImage = ImageTk.PhotoImage(Image.open("moewenball.png"))
+		self.enemyRround = None
+		self.enemyRoundX = 0
+		self.enemyRoundY = 0
+		self.enemyShotPropabilityPercent = 5
 
 		# Key binding
 		self.canvas.bind("<KeyPress>", self.keydown)
@@ -47,36 +58,55 @@ class App():
 
 
 	def update_clock(self):
+		# Move player
 		if self.arrowUp:
 			self.yPos -= 1
 		if self.arrowDown:
-			self.yPos += 1
+			self.yPos += 2
 		if self.arrowLeft:
-			self.xPos -= 1
+			self.xPos -= 3
 		if self.arrowRight:
-			self.xPos += 1
+			self.xPos += 4
 
 		self.canvas.move(self.player, self.xPos - self.xPrev, self.yPos - self.yPrev)
 		self.xPrev = self.xPos
 		self.yPrev = self.yPos
-		self.root.after(15, self.update_clock)
 
+		# Move player shot
 		if self.round != None:
 			self.canvas.move(self.round, -self.shotSpeed, 0)
 			self.roundX -= self.shotSpeed
 
-		doveDelta = self.doveSpeed = 2
+		# Move enemy
+		enemyDelta = self.enemySpeed = 2
 		if self.moveDown:
 			if self.doveY > self.maxY:
 				self.moveDown = False
 		else:
-			doveDelta = -self.doveSpeed
+			enemyDelta = -self.enemySpeed
 			if self.doveY < 0:
 				self.moveDown = True
 
-		self.canvas.move(self.dove, 0, doveDelta)
-		self.doveY += doveDelta
+		self.canvas.move(self.dove, 0, enemyDelta)
+		self.doveY += enemyDelta
 
+		# Move enemy round
+		if self.enemyRround != None:
+			self.canvas.move(self.enemyRround, self.shotSpeed, 0)
+			self.enemyRoundX += self.shotSpeed
+			if self.enemyRoundX > self.maxX:
+				self.canvas.delete(self.enemyRround)
+				self.enemyRround = None
+		# Shoot enemy
+		else:
+			shoot = random.randint(0, 100)
+
+			if shoot < self.enemyShotPropabilityPercent:				
+				self.enemyRround = self.canvas.create_image(self.doveX, self.doveY, image=self.enemyRoundImage)
+				self.enemyRoundX = self.doveX
+				self.enemyRoundY = self.doveY
+
+		self.root.after(self.clockSpeed, self.update_clock)
 
 
 	def keyup(self, e):
@@ -89,6 +119,9 @@ class App():
 		if e.keycode == 37:
 			self.arrowLeft = False
 		if e.keycode == 32:
+			if self.round != None:
+				self.canvas.delete(self.round)
+				self.round = None
 			self.round = self.canvas.create_image(self.xPos, self.yPos, image=self.roundImage)
 			self.roundX = self.xPos
 			self.roundY = self.yPos
