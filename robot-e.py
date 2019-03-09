@@ -4,7 +4,7 @@ import random
 
 class App():
 	def __init__(self):
-		self.shotSpeed = 3
+		self.playerShotSpeed = 3
 		self.enemySpeed = 2
 		self.maxY = 600
 		self.maxX = 800
@@ -25,6 +25,8 @@ class App():
 		self.arrowLeft = False
 		self.arrowRight = False
 		self.player = self.canvas.create_image(self.xPos, self.yPos, image=img)	
+		self.alive = 3
+		self.size = 80
 
 		# Setup player round
 		self.roundImage = ImageTk.PhotoImage(Image.open("feuerball.png"))
@@ -35,11 +37,14 @@ class App():
 		
 		# Setup enemy
 		doveImg =  ImageTk.PhotoImage(Image.open("buntemoewe.png"))
+		self.enemyAlive = 3
 		self.doveX = 40
 		self.doveY = 120
 		self.dove = self.canvas.create_image(self.doveX, self.doveY, image=doveImg)
 		self.moveDown = True
-
+		self.enemySize = 100
+		self.enemyShotSpeed = 6
+		
 		# Setup enemy round
 		self.enemyRoundImage = ImageTk.PhotoImage(Image.open("moewenball.png"))
 		self.enemyRround = None
@@ -59,52 +64,64 @@ class App():
 
 	def update_clock(self):
 		# Move player
-		if self.arrowUp:
-			self.yPos -= 1
-		if self.arrowDown:
-			self.yPos += 2
-		if self.arrowLeft:
-			self.xPos -= 3
-		if self.arrowRight:
-			self.xPos += 4
+		if self.alive > 0:
+			if self.arrowUp:
+				self.yPos -= 1
+			if self.arrowDown:
+				self.yPos += 2
+			if self.arrowLeft:
+				self.xPos -= 3
+			if self.arrowRight:
+				self.xPos += 4
 
-		self.canvas.move(self.player, self.xPos - self.xPrev, self.yPos - self.yPrev)
-		self.xPrev = self.xPos
-		self.yPrev = self.yPos
+			self.canvas.move(self.player, self.xPos - self.xPrev, self.yPos - self.yPrev)
+			self.xPrev = self.xPos
+			self.yPrev = self.yPos
 
 		# Move player shot
 		if self.round != None:
-			self.canvas.move(self.round, -self.shotSpeed, 0)
-			self.roundX -= self.shotSpeed
+			self.canvas.move(self.round, -self.playerShotSpeed, 0)
+			self.roundX -= self.playerShotSpeed
+			if abs(self.roundX - self.doveX) < self.enemySize and abs(self.roundY - self.doveY) < self.enemySize:
+				self.enemyAlive -= 1
+				self.canvas.delete(self.round)
+				self.round = None
 
-		# Move enemy
-		enemyDelta = self.enemySpeed = 2
-		if self.moveDown:
-			if self.doveY > self.maxY:
-				self.moveDown = False
-		else:
-			enemyDelta = -self.enemySpeed
-			if self.doveY < 0:
-				self.moveDown = True
+		if self.enemyAlive > 0:
+			# Move enemy
+			enemyDelta = self.enemySpeed = 2
+			if self.moveDown:
+				if self.doveY > self.maxY:
+					self.moveDown = False
+			else:
+				enemyDelta = -self.enemySpeed
+				if self.doveY < 0:
+					self.moveDown = True
 
-		self.canvas.move(self.dove, 0, enemyDelta)
-		self.doveY += enemyDelta
+			self.canvas.move(self.dove, 0, enemyDelta)
+			self.doveY += enemyDelta
 
-		# Move enemy round
-		if self.enemyRround != None:
-			self.canvas.move(self.enemyRround, self.shotSpeed, 0)
-			self.enemyRoundX += self.shotSpeed
-			if self.enemyRoundX > self.maxX:
-				self.canvas.delete(self.enemyRround)
-				self.enemyRround = None
-		# Shoot enemy
-		else:
-			shoot = random.randint(0, 100)
+			# Move enemy round
+			if self.enemyRround != None:
+				self.canvas.move(self.enemyRround, self.enemyShotSpeed, 0)
+				self.enemyRoundX += self.playerShotSpeed
+				
+				if abs(self.enemyRoundX - self.xPos) < self.size and abs(self.enemyRoundY - self.yPos) < self.size:
+					self.alive -= 1
+					self.canvas.delete(self.enemyRround)
+					self.enemyRround = None
 
-			if shoot < self.enemyShotPropabilityPercent:				
-				self.enemyRround = self.canvas.create_image(self.doveX, self.doveY, image=self.enemyRoundImage)
-				self.enemyRoundX = self.doveX
-				self.enemyRoundY = self.doveY
+				if self.enemyRoundX > self.maxX:
+					self.canvas.delete(self.enemyRround)
+					self.enemyRround = None
+			# Shoot enemy
+			else:
+				shoot = random.randint(0, 100)
+
+				if shoot < self.enemyShotPropabilityPercent:				
+					self.enemyRround = self.canvas.create_image(self.doveX, self.doveY, image=self.enemyRoundImage)
+					self.enemyRoundX = self.doveX
+					self.enemyRoundY = self.doveY
 
 		self.root.after(self.clockSpeed, self.update_clock)
 
