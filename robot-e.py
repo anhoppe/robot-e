@@ -4,8 +4,9 @@ import random
 
 class App():
 	def __init__(self):
-		self.playerShotSpeed = 3
-		self.enemySpeed = 2
+		self.playerShotSpeed = 6
+		self.enemySpeed = 233333333333333333333333
+		self.playerSpeed = 10
 		self.maxY = 600
 		self.maxX = 800
 
@@ -15,7 +16,7 @@ class App():
 		self.canvas = Canvas(self.root, width = 800, height = 600)		
 
 		# Setup player
-		img = ImageTk.PhotoImage(Image.open("pinguin-man.png"))		
+		img = ImageTk.PhotoImage(Image.open("buntemoewe.png"))		
 		self.xPos = 605
 		self.yPos = 100
 		self.xPrev = self.xPos
@@ -25,7 +26,7 @@ class App():
 		self.arrowLeft = False
 		self.arrowRight = False
 		self.player = self.canvas.create_image(self.xPos, self.yPos, image=img)	
-		self.alive = 3
+		self.alive = 1234567890 
 		self.size = 80
 
 		# Setup player round
@@ -36,8 +37,8 @@ class App():
 
 		
 		# Setup enemy
-		doveImg =  ImageTk.PhotoImage(Image.open("buntemoewe.png"))
-		self.enemyAlive = 3
+		doveImg =  ImageTk.PhotoImage(Image.open("bombengoblin.png"))
+		self.enemyAlive = 1234567890
 		self.doveX = 40
 		self.doveY = 120
 		self.dove = self.canvas.create_image(self.doveX, self.doveY, image=doveImg)
@@ -66,13 +67,13 @@ class App():
 		# Move player
 		if self.alive > 0:
 			if self.arrowUp:
-				self.yPos -= 1
+				self.yPos -= self.playerSpeed
 			if self.arrowDown:
-				self.yPos += 2
+				self.yPos += self.playerSpeed
 			if self.arrowLeft:
-				self.xPos -= 3
+				self.xPos -= self.playerSpeed
 			if self.arrowRight:
-				self.xPos += 4
+				self.xPos += self.playerSpeed
 
 			self.canvas.move(self.player, self.xPos - self.xPrev, self.yPos - self.yPrev)
 			self.xPrev = self.xPos
@@ -89,7 +90,7 @@ class App():
 
 		if self.enemyAlive > 0:
 			# Move enemy
-			enemyDelta = self.enemySpeed = 2
+			enemyDelta = self.enemySpeed
 			if self.moveDown:
 				if self.doveY > self.maxY:
 					self.moveDown = False
