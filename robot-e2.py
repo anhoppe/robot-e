@@ -1,6 +1,7 @@
 import pygame
 
 from enum import Flag
+from random import randrange
 from pytmx import load_pygame
 
 class Direction(Flag):
@@ -16,8 +17,8 @@ HScreenSize = 768
 xScreenCenter = WScreenSize / 2
 yScreenCenter = HScreenSize / 2
 
-xPlayerStart = 20 * 32
-yPlayerStart = 20 * 32
+xPlayerStart = 100
+yPlayerStart = 100
 
 pygame.init()
 
@@ -30,8 +31,11 @@ crashed = False
 
 tmxdata = load_pygame("map/world.tmx")
 
-worldWidth = tmxdata.width
-worldHeight = tmxdata.height
+worldWidthFields = tmxdata.width
+worldHeightFields = tmxdata.height
+print("World: " + str(worldWidthFields))
+print("Height: " + str(worldHeightFields))
+
 tileWidth = tmxdata.tilewidth
 tileHeight = tmxdata.tileheight
 
@@ -53,18 +57,23 @@ fireDist = 500
 
 enemyImage = pygame.image.load('Bombengoblin.png')
 enemyShot = pygame.image.load('moewenball.png')
-xEnemy = 0
-yEnemy = 0
-enemyExists = False
+xEnemy = 100
+yEnemy = 100
+xEnemyTarget = 0
+yEnemyTarget = 0
 
 while not crashed:	
-    for x in range(0, worldWidth):
-        for y in range(0, worldHeight):		
+    # Draw Scene
+    for x in range(0, worldWidthFields):
+        for y in range(0, worldHeightFields):		
             image = tmxdata.get_tile_image(x, y, 0)
-            gameDisplay.blit(image, (x*tileWidth+xPlayer, y*tileHeight+yPlayer))
+            gameDisplay.blit(image, (x*tileWidth+xPlayer-xScreenCenter, y*tileHeight+yPlayer-yScreenCenter))
 
     gameDisplay.blit(playerImage, (xScreenCenter, yScreenCenter))
+    gameDisplay.blit(enemyImage, (xScreenCenter + xPlayer - xEnemy, yScreenCenter + yPlayer - yEnemy))
 
+
+    # Move player
     if playerMoveDirection & Direction.Up == Direction.Up:
         yPlayer += speedPlayer
     if playerMoveDirection & Direction.Down == Direction.Down:
@@ -74,13 +83,35 @@ while not crashed:
     if playerMoveDirection & Direction.Right == Direction.Right:
         xPlayer -= speedPlayer
 
+    # Move player shot
     if playerFires:
         xPlayerFire -= fireSpeed
         playerFireTtl -= fireSpeed
-        gameDisplay.blit(playerShot, (xPlayerFire - xPlayer, yPlayerFire - yPlayer))
+        gameDisplay.blit(playerShot, (xScreenCenter + xPlayer - xPlayerFire, yScreenCenter + yPlayer - yPlayerFire))
         if playerFireTtl <= 0:
             playerFires = False
 
+    # Move enemy
+    if xEnemyTarget == 0:
+        xEnemyTarget = xEnemy + randrange(100) - 50
+        yEnemyTarget = yEnemy + randrange(100) - 50
+    else:
+        if xEnemyTarget == xEnemy and yEnemyTarget == yEnemy:
+            xEnemyTarget = 0
+            yEnemyTarget = 0
+        else:
+            if xEnemyTarget < xEnemy:
+                xEnemy -= 1
+            elif xEnemyTarget > xEnemy:
+                xEnemy +=1
+            if yEnemyTarget < yEnemy:
+                yEnemy -=1
+            elif yEnemyTarget > yEnemy:
+                yEnemy +=1
+                
+
+
+    # Process input events
     events = pygame.event.get()
 
     for event in events:
@@ -95,8 +126,8 @@ while not crashed:
                 playerMoveDirection |= Direction.Down
             elif event.key == pygame.K_SPACE:
                 playerFires = True
-                xPlayerFire = xPlayer + xScreenCenter
-                yPlayerFire = yPlayer + yScreenCenter
+                xPlayerFire = xPlayer
+                yPlayerFire = yPlayer
                 playerFireTtl = fireDist
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
@@ -112,4 +143,4 @@ while not crashed:
             crashed = True
 
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(20)
